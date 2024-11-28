@@ -69,43 +69,6 @@ class TestAggregatedThreatScore(unittest.TestCase):
         aggregated_score = calculate_aggregated_threat_score(department_data)
         self.assertTrue(0 <= aggregated_score <= 90)
 
-    # def test_high_disparity_in_user_counts(self):
-    #     """
-    #     Test case where departments have a wide range of user counts.
-    #     """
-    #     department_data = fetch_data_from_elasticsearch("test_high_disparity_in_user_counts")
-    #     department_data[0] = (department_data[0][0], [20] * 10, 2)  # Department with fewer users
-    #     department_data[1] = (department_data[1][0], [60] * 200, 3)  # Department with many users
-    #     aggregated_score = calculate_aggregated_threat_score(department_data)
-    #     self.assertTrue(0 <= aggregated_score <= 90)
-
-    # def test_all_departments_zero_scores(self):
-    #     """
-    #     Test case where all threat scores are zero.
-    #     """
-    #     department_data = fetch_data_from_elasticsearch("test_all_departments_zero_scores")
-    #     department_data = [(dep_id, [0] * len(scores), imp) for dep_id, scores, imp in department_data]
-    #     aggregated_score = calculate_aggregated_threat_score(department_data)
-    #     self.assertEqual(aggregated_score, 0)
-
-    # def test_maximum_possible_scores(self):
-    #     """
-    #     Test case where all departments have maximum scores.
-    #     """
-    #     department_data = fetch_data_from_elasticsearch("test_maximum_possible_scores")
-    #     department_data = [(dep_id, [90] * len(scores), imp) for dep_id, scores, imp in department_data]
-    #     aggregated_score = calculate_aggregated_threat_score(department_data)
-    #     self.assertEqual(aggregated_score, 90)
-
-    # def test_only_one_department(self):
-    #     """
-    #     Test case where there is only one department.
-    #     """
-    #     department_data = [("engineering", [30, 40, 50, 60], 3)]
-    #     aggregated_score = calculate_aggregated_threat_score(department_data)
-    #     expected_score = calculate_department_threat_score([30, 40, 50, 60], 3)
-    #     self.assertAlmostEqual(aggregated_score, expected_score)
-
 
 if __name__ == "__main__":
     unittest.main()
