@@ -1,0 +1,6 @@
+Department,ThreatScores,Importance
+Engineering,"[10, 20, 30, 40, 50]",3
+Marketing,"[15, 25, 35, 45, 55]",4
+Finance,[0],5
+HR,[],2
+Science,"[20, 30, 40]",1

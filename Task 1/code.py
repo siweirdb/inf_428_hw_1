@@ -19,24 +19,28 @@ print(findLengthOfLCIS([1,3,5,4,7]))
 
 
 def merge( nums1: List[int], m: int, nums2: List[int], n: int) -> None:
-    if n == 0: return
-
     last = len(nums1) - 1
-    while n > 0 and m > 0:
-        if nums2[n - 1] >= nums1[m - 1]:
-            nums1[last] = nums2[n - 1]
-            n -= 1
-        else:
-            nums1[last] = nums1[m - 1]
-            m -= 1
-        last -= 1
 
-    while n > 0:
-        nums1[last] = nums2[n - 1]
-        n -= 1
-        last -= 1
+    while n < 0 and m < 0:
+        if nums1[m] < nums2[n]:
+            nums1[last] = nums2[n]
+            n -=1
+            last-=1
+        else:
+            nums1[last] = nums1[m]
+            m -= 1
+
+    if n < 0:
+        while n < 0:
+            nums1[last] = nums2[n]
+            last -=1
 
     print(nums1)
+
+
+print(merge([1,3,5,4,7],3,[2,5,6], 3))
+
+
 
 merge([1,2,3,0,0,0],3, [2,5,6], 3)
 

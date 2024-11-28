@@ -1,8 +1,10 @@
 import numpy as np
 import unittest
 
+
 def generate_random_data(mean, variance, num_samples):
-    return np.random.randint(mean - variance, mean + variance + 1, num_samples)
+    return np.random.randint(max(mean - variance, 0), mean + variance + 1, num_samples)
+
 
 def calculate_department_threat_score(threat_scores, importance):
     if len(threat_scores) == 0:
@@ -17,65 +19,89 @@ def aggregate_company_threat_score(department_scores, total_importance):
     normalized_score = total_score / total_importance if total_importance > 0 else 0
     return min(normalized_score, 90)
 
-class TestCompanyThreatScore(unittest.TestCase):
-    def setUp(self):
-        self.departments = [
-            {"name": "Engineering", "mean": 30, "variance": 10, "num_samples": 100, "importance": 3},
-            {"name": "Marketing", "mean": 25, "variance": 5, "num_samples": 90, "importance": 2},
-            {"name": "Finance", "mean": 40, "variance": 15, "num_samples": 80, "importance": 4},
-            {"name": "HR", "mean": 20, "variance": 10, "num_samples": 50, "importance": 1},
-            {"name": "Science", "mean": 35, "variance": 12, "num_samples": 110, "importance": 5},
+
+def calculate_aggregated_threat_score(department_data):
+    """
+    Combines `calculate_department_threat_score` and `aggregate_company_threat_score`
+    to calculate the aggregated threat score for the company.
+    """
+    department_scores = []
+    total_importance = 0
+
+    for _, threat_scores, importance in department_data:
+        department_score = calculate_department_threat_score(threat_scores, importance)
+        department_scores.append(department_score)
+        total_importance += importance
+
+    return aggregate_company_threat_score(department_scores, total_importance)
+
+
+class TestAggregatedThreatScore(unittest.TestCase):
+
+    def test_generate_random_data(self):
+        mean = 50
+        variance = 20
+        num_samples = 100
+        data = generate_random_data(mean, variance, num_samples)
+        self.assertTrue(np.all(data >= 0) and np.all(data <= 90))
+
+    def test_calculate_aggregated_threat_score(self):
+        department_data = [
+            (100, np.random.randint(0, 90, 100), 2),
+            (150, np.random.randint(0, 90, 150), 3),
+            (200, np.random.randint(0, 90, 200), 1),
         ]
+        aggregated_score = calculate_aggregated_threat_score(department_data)
+        self.assertTrue(0 <= aggregated_score <= 90)
 
-    def test_calculate_department_threat_score(self):
-        scores = generate_random_data(30, 10, 100)
-        score = calculate_department_threat_score(scores, 3)
-        self.assertTrue(0 <= score <= 270, "Threat score should be between 0 and 270")
+    def test_calculate_aggregated_threat_score_empty(self):
+        department_data = []
+        aggregated_score = calculate_aggregated_threat_score(department_data)
+        self.assertEqual(aggregated_score, 0)
 
-    def test_aggregate_company_threat_score(self):
-        scores = [100, 150, 200]
-        total_importance = 10
-        agg_score = aggregate_company_threat_score(scores, total_importance)
-        self.assertTrue(0 <= agg_score <= 90, "Aggregated score should be between 0 and 90")
+    def test_calculate_aggregated_threat_score_single_department(self):
+        department_data = [
+            (100, np.random.randint(0, 90, 100), 3)
+        ]
+        aggregated_score = calculate_aggregated_threat_score(department_data)
+        self.assertTrue(0 <= aggregated_score <= 90)
 
-    def test_case_1_equal_importance_similar_means(self):
-        scores = []
-        total_importance = sum(dept['importance'] for dept in self.departments)
-        for dept in self.departments:
-            threat_scores = generate_random_data(dept["mean"], dept["variance"], dept["num_samples"])
-            scores.append(calculate_department_threat_score(threat_scores, dept["importance"]))
-        agg_score = aggregate_company_threat_score(scores, total_importance)
-        self.assertTrue(0 <= agg_score <= 90, "Aggregated score should stay within 0 - 90 range")
+    def test_all_departments_same_scores(self):
+        department_data = [
+            (100, np.full(100, 50), 2),
+            (150, np.full(150, 50), 3),
+            (200, np.full(200, 50), 1),
+        ]
+        aggregated_score = calculate_aggregated_threat_score(department_data)
+        self.assertEqual(aggregated_score, 50)
 
-    def test_case_2_high_importance_outlier_department(self):
-        self.departments[0] = {"name": "Engineering", "mean": 80, "variance": 5, "num_samples": 150, "importance": 5}
-        scores = []
-        total_importance = sum(dept['importance'] for dept in self.departments)
-        for dept in self.departments:
-            threat_scores = generate_random_data(dept["mean"], dept["variance"], dept["num_samples"])
-            scores.append(calculate_department_threat_score(threat_scores, dept["importance"]))
-        agg_score = aggregate_company_threat_score(scores, total_importance)
-        self.assertTrue(0 <= agg_score <= 90, "Aggregated score should stay within 0 - 90 range")
+    def test_one_high_scoring_department(self):
+        department_data = [
+            (100, np.random.randint(10, 30, 100), 1),  # Low scores
+            (150, np.random.randint(10, 30, 150), 2),  # Low scores
+            (200, np.random.randint(80, 90, 200), 3),  # High scores
+        ]
+        aggregated_score = calculate_aggregated_threat_score(department_data)
+        self.assertGreater(aggregated_score, 50)
 
-    def test_case_3_no_users_in_department(self):
-        self.departments[4]["num_samples"] = 0
-        scores = []
-        total_importance = sum(dept['importance'] for dept in self.departments)
-        for dept in self.departments:
-            threat_scores = generate_random_data(dept["mean"], dept["variance"], dept["num_samples"])
-            scores.append(calculate_department_threat_score(threat_scores, dept["importance"]))
-        agg_score = aggregate_company_threat_score(scores, total_importance)
-        self.assertTrue(0 <= agg_score <= 90, "Aggregated score should stay within 0 - 90 range")
+    def test_one_department_with_high_variance(self):
+        department_data = [
+            (100, np.full(100, 50), 2),  # Average scores
+            (150, np.random.randint(50, 51, 150), 3),  # Uniform average
+            (200, np.concatenate([np.random.randint(10, 20, 150), np.random.randint(80, 90, 50)]), 1),  # Skewed scores
+        ]
+        aggregated_score = calculate_aggregated_threat_score(department_data)
+        self.assertTrue(0 <= aggregated_score <= 90)
 
-    def test_case_4_large_user_disparity(self):
-        self.departments[2]["num_samples"] = 1000
-        scores = []
-        total_importance = sum(dept['importance'] for dept in self.departments)
-        for dept in self.departments:
-            threat_scores = generate_random_data(dept["mean"], dept["variance"], dept["num_samples"])
-            scores.append(calculate_department_threat_score(threat_scores, dept["importance"]))
-        agg_score = aggregate_company_threat_score(scores, total_importance)
-        self.assertTrue(0 <= agg_score <= 90, "Aggregated score should stay within 0 - 90 range")
+    def test_different_number_of_users(self):
+        department_data = [
+            (50, np.random.randint(30, 70, 50), 1),  # Small department
+            (200, np.random.randint(20, 80, 200), 2),  # Large department
+            (10, np.random.randint(10, 90, 10), 3),  # Very small department
+        ]
+        aggregated_score = calculate_aggregated_threat_score(department_data)
+        self.assertTrue(0 <= aggregated_score <= 90)
+
 
 if __name__ == "__main__":
     unittest.main()
