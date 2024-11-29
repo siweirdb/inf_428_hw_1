@@ -59,7 +59,7 @@ class TestAggregatedThreatScore(unittest.TestCase):
 
     def test_no_users_in_department(self):
         department_data = fetch_data_from_elasticsearch("test_no_users_in_department")
-        department_data.append(("empty_dept", [], 3))  # Adding a department with no users
+        department_data.append(("empty_dept", [], 3))
         aggregated_score = calculate_aggregated_threat_score(department_data)
         self.assertTrue(0 <= aggregated_score <= 90)
 

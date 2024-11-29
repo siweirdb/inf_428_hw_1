@@ -69,7 +69,14 @@ class TestAggregatedThreatScore(unittest.TestCase):
         aggregated_score = calculate_aggregated_threat_score(department_data)
         self.assertEqual(aggregated_score, 50)
 
-
+    def test_high_threat_scores_in_one_department(self):
+        department_data = [
+            (100, np.full(100, 50)),
+            (150, np.full(150, 50)),
+            (200, np.concatenate([np.full(180, 50), np.full(20, 90)])),
+        ]
+        aggregated_score = calculate_aggregated_threat_score(department_data)
+        self.assertTrue(50 < aggregated_score <= 90)
 
     def test_one_department_with_high_variance(self):
         department_data = [
